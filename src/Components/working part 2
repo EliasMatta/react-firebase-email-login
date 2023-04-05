@@ -1,0 +1,88 @@
+import React, { useEffect ,useState} from "react";
+import { app} from '../firebase';
+import Button from 'react-bootstrap/Button';
+
+import { useHistory } from "react-router-dom"
+
+
+const db = app.firestore();
+
+function UploadImages() {
+
+
+
+  const [fileUrl, setFileUrl] = React.useState(null);
+  const [users, setUsers] = React.useState([]);
+
+  const onFileChange = async (e) => {
+    const file = e.target.files[0];
+    const storageRef = app.storage().ref();
+    const fileRef = storageRef.child(file.name);
+    await fileRef.put(file);
+    setFileUrl(await fileRef.getDownloadURL());
+  };
+
+ async function onSubmit (e) {
+    e.preventDefault();
+    const caption = e.target.caption.value;
+    if (!caption || !fileUrl) {
+      return;
+    }
+    await db.collection("users").doc(caption).set({
+      name: caption,
+      avatar: fileUrl,
+    });
+
+    window.location.reload(true);
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const usersCollection = await db.collection("users").get();
+      setUsers(
+        usersCollection.docs.map((doc) => {
+          return doc.data();
+        })
+      );
+    };
+    fetchUsers();
+  }, []);
+
+
+
+    
+  // Creating a const variable history that can be used for redirecting the user to another page after an event is triggered
+  const history = useHistory()
+
+  function handleHome() {
+    try {
+
+        history.goBack("/")
+    } catch {
+       
+    }
+
+}
+  return (
+    <>   
+      <form onSubmit={onSubmit}>
+        <input type="file" onChange={onFileChange} />
+        <input type="text" name="caption" placeholder="Enter caption" />
+        <button>Submit</button>
+      </form>
+        <Button variant="dark" onClick={handleHome}>Go Back</Button>
+      <ul>
+        {users.map((user) => {
+          return (
+            <li key={user.name}>
+              <img width="100" height="100" src={user.avatar} alt={user.name} />
+              <p>{user.name}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
+export default UploadImages;
