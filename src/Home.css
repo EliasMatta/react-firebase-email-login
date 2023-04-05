@@ -1,0 +1,48 @@
+.home-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .home-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 10vh;
+    padding: 0 20px;
+    background-color: white;
+    border-bottom: 1px solid #dbdbdb;
+  }
+  
+  .home-header {
+    font-size: 2rem;
+  }
+  
+  .home-nav-icons {
+    display: flex;
+    align-items: center;
+  }
+  
+  .home-nav-icon {
+    font-size: 1.5rem;
+    margin-left: 20px;
+    cursor: pointer;
+  }
+  
+  .home-upload-icon {
+    position: fixed;
+    bottom: 5vh;
+    right: 5vw;
+  }
+  
+  @media (max-width: 768px) {
+    .home-header {
+      font-size: 1.5rem;
+    }
+  
+    .home-nav-icon {
+      font-size: 1.2rem;
+      margin-left: 10px;
+    }
+  }
+  

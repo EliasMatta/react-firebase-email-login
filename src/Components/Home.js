@@ -1,69 +1,93 @@
-import React, { useState } from "react"
-import { Alert } from "react-bootstrap"
-import { BsPlusCircleFill } from "react-icons/bs"
-import Button from 'react-bootstrap/Button'
-import { useAuth } from "../AuthContext"
-import { useHistory, useLocation } from "react-router-dom"
-import ImageGallery from "./ImageGallery"
+import React, { useState } from "react";
+import { Alert } from "react-bootstrap";
+import { BsPlusCircleFill, BsBellFill, BsHeartFill, BsPersonFill } from "react-icons/bs";
+import Button from 'react-bootstrap/Button';
+import { useAuth } from "../AuthContext";
+import { useHistory, useLocation } from "react-router-dom";
+import ImageGallery from "./ImageGallery";
+import { auth, storage } from "../firebase";
+import "../Home.css";
 
 function Home() {
-  const [error, setError] = useState("")
-  const { logout } = useAuth()
-  const history = useHistory()
-  const location = useLocation()
-  const [imageUrls, setImageUrls] = useState(location.state?.imageUrls ?? []) // Add state for imageUrls
+  const [error, setError] = useState("");
+  const { logout } = useAuth();
+  const history = useHistory();
+  const location = useLocation();
+  const [imageUrls, setImageUrls] = useState(location.state?.imageUrls ?? []);
 
-  async function handleLogout() {
-    setError("")
+  async function handleLogout(setUser, setImageUrls, setError) {
+    setError("");
     try {
-      await logout()
-      history.push("/login")
-    } catch {
-      setError("Log out failed")
+      // Get a reference to the Firebase storage folder for the images
+      const imagesRef = storage.ref("images");
+  
+      // Get a list of all the images in the folder
+      const imagesList = await imagesRef.listAll();
+  
+      // Filter the images that are not in the imageUrls state
+      const imagesToDelete = imagesList.items.filter(
+        (item) => !imageUrls.includes(item.location.path)
+      );
+  
+      // Delete each image that needs to be deleted
+      await Promise.all(
+        imagesToDelete.map((item) => {
+          return item.delete();
+        })
+      );
+  
+      // Log out the user
+      await auth.signOut();
+  
+      // Set the user state to null
+      setUser(null);
+  
+      // Set the imageUrls state to an empty array
+      setImageUrls([]);
+  
+      // Redirect the user to the login page
+      useHistory.push("/login");
+    } catch (error) {
+      setError(error.message);
     }
   }
 
   async function handleNotification() {
-    setError("")
+    setError("");
     try {
-      history.push("/notify")
+      history.push("/notify");
     } catch {
-      setError("No Notification")
+      setError("No Notification");
     }
   }
 
   async function handleUpload() {
-    setError("")
+    setError("");
     try {
-      history.push("/UploadImages", { prevImageUrls: imageUrls }) // Pass the previous imageUrls state as a prop
+      history.push("/UploadImages", { prevImageUrls: imageUrls });
     } catch {
-      setError("Error Access Denied")
+      setError("Error Access Denied");
     }
   }
 
   return (
-    <section>
-      <nav>
-        <h1>Welcome to Instagram </h1>
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Button variant="dark" onClick={handleLogout}>Log Out</Button>
-        <Button variant="dark" onClick={handleNotification}>Notification</Button>
+    <section className="home-container">
+      <nav className="home-nav">
+        <h1 className="home-header">Instagram</h1>
+        <div className="home-nav-icons">
+          <BsBellFill className="home-nav-icon" />
+          <BsHeartFill className="home-nav-icon" />
+          <BsPersonFill className="home-nav-icon" onClick={handleLogout} />
+        </div>
       </nav>
       <body>
-        <ImageGallery imageUrls={imageUrls} />
+        <ImageGallery imageUrls={imageUrls} setImageUrls={setImageUrls} />
       </body>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          fontSize: 69,
-        }}
-      >
-        <Button variant="dark" onClick={handleUpload}><BsPlusCircleFill /></Button>
+      <div className="home-upload-icon">
+        <Button variant="primary" onClick={handleUpload}><BsPlusCircleFill /></Button>
       </div>
     </section>
   )
 }
 
-export default Home
+export default Home;
